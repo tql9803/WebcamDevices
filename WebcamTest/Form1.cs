@@ -18,6 +18,8 @@ namespace WebcamTest
     {
         FilterInfoCollection videoDevices;
 
+        private Stopwatch fpsWatch;
+
         public WebcamTestApp()
         {
             InitializeComponent();
@@ -34,11 +36,18 @@ namespace WebcamTest
 
                 comboBox1.Items.Add(cameraName);                
             }
+
+            button1.Enabled = true;
+            button2.Enabled = false;
+
         }
 
         private void StopButtonClick(object sender, EventArgs e)
         {
             StopCamera();
+
+            button1.Enabled = true;
+            button2.Enabled = false;
         }
 
         private void StartButtonClick(object sender, EventArgs e)
@@ -56,14 +65,47 @@ namespace WebcamTest
 
             videoSourcePlayer1.VideoSource = videoSource;
             videoSourcePlayer1.Start();
+
+            fpsWatch = null;
+            timer1.Start();
         }
 
         private void StopCamera()
         {
+            timer1.Stop();
+
             videoSourcePlayer1.SignalToStop();
             videoSourcePlayer1.WaitForStop();
         }
 
-        
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            IVideoSource videoSource = videoSourcePlayer1.VideoSource;
+
+            int framesReceived = 0;
+
+            // get number of frames for the last second
+            if (videoSource != null)
+            {
+                framesReceived = videoSource.FramesReceived;
+            }            
+
+            if (fpsWatch == null)
+            {
+                fpsWatch = new Stopwatch();
+                fpsWatch.Start();
+            }
+            else
+            {
+                fpsWatch.Stop();
+
+                float fps1 = 1000.0f * framesReceived / fpsWatch.ElapsedMilliseconds;
+
+                label2.Text = fps1.ToString("F2") + " fps";
+
+                fpsWatch.Reset();
+                fpsWatch.Start();
+            }
+        }
     }
 }
